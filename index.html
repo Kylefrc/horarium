@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <title>Horarium</title>
 <meta name="description" content="A personal rule of the hours." />
-<!-- Add-to-Home-Screen niceties -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="Horarium" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -57,18 +56,19 @@
   /* Day panel */
   .panel{ background:var(--panel); border:1px solid var(--rule); border-radius:16px; overflow:hidden;
           box-shadow:0 10px 26px rgba(60,45,20,.10); }
-  .hourRow{ display:flex; align-items:center; padding:6px 12px; min-height:46px; border-top:1px solid #EFE6D2; cursor:pointer; }
+  .hourRow{ display:flex; align-items:stretch; padding:6px 12px; min-height:46px; border-top:1px solid #EFE6D2; cursor:pointer; }
   .hourRow:first-child{ border-top:none; }
   .hourRow.now{ background:#FFFDF6; }
-  .hourLabel{ width:56px; flex:0 0 auto; font-family:var(--body); font-weight:600; font-size:13px; letter-spacing:.3px; color:#9A8F77; }
+  .hourLabel{ width:56px; flex:0 0 auto; padding-top:11px; font-family:var(--body); font-weight:600; font-size:13px; letter-spacing:.3px; color:#9A8F77; }
   .hourRow.now .hourLabel{ color:var(--gilt); }
-  .block{ flex:1; display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:10px; border-left:3px solid; }
-  .blockText{ font-family:var(--body); font-weight:500; font-size:16px; color:var(--ink); }
+  .blocks{ flex:1; display:flex; flex-direction:column; gap:5px; }
+  .block{ display:flex; align-items:center; gap:9px; padding:8px 12px; border-radius:10px; border-left:3px solid; }
+  .blockText{ font-family:var(--body); font-weight:500; font-size:15.5px; color:var(--ink); }
   .dot{ width:9px; height:9px; border-radius:99px; flex:0 0 auto; }
-  .empty{ flex:1; padding:9px 12px; border-radius:10px; }
+  .empty{ flex:1; padding:9px 12px; border-radius:10px; display:flex; align-items:center; }
   .emptyText{ font-family:var(--body); font-style:italic; font-size:14px; color:#B6A98C; }
   .nowTag{ font-family:var(--body); font-weight:600; font-size:10px; letter-spacing:1px; text-transform:uppercase;
-           color:var(--gilt); margin-left:8px; flex:0 0 auto; }
+           color:var(--gilt); margin-left:8px; flex:0 0 auto; padding-top:11px; }
 
   /* Week grid */
   .weekPanel{ background:var(--panel); border:1px solid var(--rule); border-radius:16px; padding:8px 8px 12px;
@@ -82,7 +82,7 @@
   .weekHourText{ width:30px; flex:0 0 auto; text-align:right; padding-right:4px; font-family:var(--body); font-weight:600;
                  font-size:9px; color:#A99C82; display:flex; align-items:center; justify-content:flex-end; }
   .weekCell{ flex:1; height:22px; margin:0 1px; border-radius:3px; display:flex; align-items:center; justify-content:center;
-             cursor:pointer; overflow:hidden; }
+             cursor:pointer; overflow:hidden; position:relative; }
   .weekCellText{ font-family:var(--body); font-weight:600; font-size:8.5px; color:rgba(255,255,255,.92);
                  white-space:nowrap; padding:0 2px; }
   .weekCell.now{ outline:1.5px solid var(--gilt); outline-offset:-1px; }
@@ -101,21 +101,28 @@
             opacity:0; pointer-events:none; transition:opacity .18s ease; }
   .overlay.open{ opacity:1; pointer-events:auto; }
   .sheet{ width:100%; max-width:680px; margin:0 auto; background:#FBF7EC; border-radius:22px 22px 0 0;
-          padding:10px 16px calc(20px + env(safe-area-inset-bottom)); max-height:82vh; overflow-y:auto;
+          padding:10px 16px calc(18px + env(safe-area-inset-bottom)); max-height:86vh; overflow-y:auto;
           transform:translateY(16px); transition:transform .18s ease; box-shadow:0 -8px 30px rgba(40,32,20,.25); }
   .overlay.open .sheet{ transform:translateY(0); }
   .sheetHandle{ width:44px; height:4px; border-radius:99px; background:#D8CBA9; margin:4px auto 12px; }
-  .sheetHead{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .sheetHead{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .sheetKicker{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:2px; color:var(--gilt); text-transform:uppercase; }
   .sheetTitle{ font-family:var(--display); font-weight:600; font-size:26px; }
   .iconBtn{ background:#EFE6D2; border:none; border-radius:99px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#7A6F57; }
-  .groupLabel{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin:14px 0 7px; }
+  .inThis{ background:#F4ECD9; border:1px solid #E6DABF; border-radius:12px; padding:11px 12px; margin:8px 0 6px; }
+  .inThisLabel{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8A7E64; margin-bottom:8px; }
+  .inThisEmpty{ font-family:var(--body); font-style:italic; font-size:14px; color:#B0A488; }
+  .groupLabel{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin:15px 0 7px; }
   .chipWrap{ display:flex; flex-wrap:wrap; gap:7px; }
   .chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 13px; border-radius:99px; border:1px solid; cursor:pointer; }
-  .chipText{ font-family:var(--body); font-weight:500; font-size:14.5px; color:var(--ink); }
+  .chipText{ font-family:var(--body); font-weight:500; font-size:14.5px; }
+  .chip .check{ font-weight:700; font-size:13px; margin-left:-2px; }
+  .chipDel{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; margin:-3px -5px -3px 1px;
+            border-radius:99px; background:rgba(0,0,0,.12); color:#5a5142; font-size:15px; line-height:1; cursor:pointer; }
+  .hintLine{ font-family:var(--body); font-style:italic; font-size:13px; color:#9A8E74; margin:14px 2px 2px; }
   .addCustomBtn{ display:inline-flex; align-items:center; gap:7px; align-self:flex-start; background:none; border:none;
-                 cursor:pointer; margin-top:18px; font-family:var(--body); font-weight:500; font-size:14.5px; color:var(--gilt); }
-  .formBox{ background:#F3EAD6; border:1px solid var(--rule); border-radius:10px; padding:14px; margin-top:16px; }
+                 cursor:pointer; margin-top:16px; font-family:var(--body); font-weight:500; font-size:14.5px; color:var(--gilt); }
+  .formBox{ background:#F3EAD6; border:1px solid var(--rule); border-radius:10px; padding:14px; margin-top:14px; }
   .input{ width:100%; background:#FFFDF7; border:1px solid var(--rule); border-radius:9px; padding:11px 12px;
           font-family:var(--body); font-size:16px; color:var(--ink); }
   .formLabel{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#8A7E64; margin:14px 0 7px; }
@@ -127,8 +134,11 @@
             font-family:var(--body); font-weight:500; font-size:15px; cursor:pointer; }
   .cancelBtn{ background:none; border:1px solid var(--rule); border-radius:8px; padding:12px 18px;
               font-family:var(--body); font-size:15px; color:#7A6F57; cursor:pointer; }
-  .clearBtn{ width:100%; margin-top:14px; background:none; border:1px solid #E4D8BF; border-radius:10px; padding:12px;
+  .sheetBtns{ display:flex; gap:8px; margin-top:18px; }
+  .clearBtn{ flex:0 0 auto; background:none; border:1px solid #E4D8BF; border-radius:10px; padding:12px 16px;
              font-family:var(--body); font-size:14.5px; color:#9A6A6A; cursor:pointer; }
+  .doneBtn{ flex:1; background:var(--gilt); color:#FFF7E6; border:none; border-radius:10px; padding:12px;
+            font-family:var(--body); font-weight:600; font-size:15px; cursor:pointer; }
 
   .footnote{ text-align:center; font-family:var(--body); font-style:italic; font-size:12px; color:#A99C82; padding:18px 0 6px; }
 </style>
@@ -141,7 +151,6 @@
   "use strict";
 
   /* ---------- palette / data ---------- */
-  var GILT = "#9C7A24";
   var DOMAINS = {
     prayer:  { label:"Prayer",        color:"#9C7A24", tint:"#EEE2C0" },
     sacred:  { label:"Sacraments",    color:"#8C2F39", tint:"#EBD3D5" },
@@ -187,34 +196,35 @@
   var DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   var DAY_ABBR  = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-  /* ---------- seeded frame (Kyle's, v2) ---------- */
+  /* ---------- seeded frame (Kyle's, v3 — multi-per-hour) ---------- */
   var WEEKDAY = {
     0:"sleep",1:"sleep",2:"sleep",3:"sleep",4:"sleep",
-    5:"exercise", 6:"commute",
+    5:["office","exercise"],            // 5:00 wake — Morning Office + exercise
+    6:["hygiene","commute"],            // wash/groom, leave ~6:30
     7:"work",8:"work",9:"work",10:"work",11:"work",
     12:"lunch",
     13:"work",14:"work",15:"work",
     16:"commute",17:"kids",18:"dinner",19:"claude",
-    20:"rosary-wife",21:"compline",22:"sleep",23:"sleep"
+    20:"rosary-wife",21:["examen","compline"],22:"sleep",23:"sleep"
   };
   var SATURDAY = {
     0:"sleep",1:"sleep",2:"sleep",3:"sleep",4:"sleep",5:"sleep",
     6:"office",7:"exercise",8:"mass",9:"confession",10:"breakfast",11:"chores",
     12:"lunch",13:"family",14:"family",15:"claude",16:"family",17:"family",
-    18:"dinner",19:"family",20:"sauna",21:"reading",22:"rosary-wife",23:"compline"
+    18:"dinner",19:"family",20:"sauna",21:"reading",22:"rosary-wife",23:["examen","compline"]
   };
   var SUNDAY = {
     0:"sleep",1:"sleep",2:"sleep",3:"sleep",4:"sleep",5:"sleep",
     6:"office",7:"breakfast",8:"mass",9:"family",10:"family",11:"family",
     12:"lunch",13:"family",14:"family",15:"lectio",16:"family",17:"family",
-    18:"dinner",19:"family",20:"rosary-wife",21:"compline",22:"sleep",23:"sleep"
+    18:"dinner",19:"family",20:"rosary-wife",21:["examen","compline"],22:"sleep",23:"sleep"
   };
   function buildDefault(){
-    var s = { 0:clone(SUNDAY), 6:clone(SATURDAY) };
-    for (var d=1; d<=5; d++) s[d] = clone(WEEKDAY);
+    var s = { 0:cloneDay(SUNDAY), 6:cloneDay(SATURDAY) };
+    for (var d=1; d<=5; d++) s[d] = cloneDay(WEEKDAY);
     return s;
   }
-  function clone(o){ var r={}; for (var k in o) r[k]=o[k]; return r; }
+  function cloneDay(o){ var r={}; for (var k in o){ var v=o[k]; r[k]=Array.isArray(v)?v.slice():v; } return r; }
 
   var STORAGE_KEY = "horarium-v1";
 
@@ -246,36 +256,47 @@
   /* ---------- helpers ---------- */
   function allActs(){ return ACTIVITIES.concat(state.custom); }
   function actById(id){ var a=allActs(); for (var i=0;i<a.length;i++) if (a[i].id===id) return a[i]; return null; }
-  function domainOf(id){ var a=actById(id); return a ? DOMAINS[a.domain] : null; }
+  function isCustom(id){ return typeof id==="string" && id.slice(0,2)==="c-"; }
   function hourLabel(h){ var ap = h<12?"AM":"PM"; var hr = h%12; if (hr===0) hr=12; return hr+" "+ap; }
   function nowObj(){ var d=new Date(); return { day:d.getDay(), hour:d.getHours() }; }
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]; }); }
+  // a cell may be a string (one activity) or an array (several); always read as an array
+  function cellArr(day, hour){ var v=(state.schedule[day]||{})[hour]; return Array.isArray(v)?v.slice():(v?[v]:[]); }
+  function setCell(day, hour, arr){
+    if (!state.schedule[day]) state.schedule[day] = {};
+    if (arr && arr.length) state.schedule[day][hour] = arr; else delete state.schedule[day][hour];
+  }
 
   /* ---------- mutations ---------- */
-  function assign(day, hour, id){
-    if (!state.schedule[day]) state.schedule[day] = {};
-    state.schedule[day][hour] = id;
-    state.picker = null; state.showForm = false; save(); render();
+  function toggleAct(day, hour, id){
+    var arr = cellArr(day, hour); var i = arr.indexOf(id);
+    if (i === -1) arr.push(id); else arr.splice(i, 1);
+    setCell(day, hour, arr); save(); render();   // keep picker open so you can add several
   }
-  function clearHour(day, hour){
-    if (state.schedule[day]) delete state.schedule[day][hour];
-    state.picker = null; save(); render();
-  }
+  function clearHour(day, hour){ setCell(day, hour, []); save(); render(); }
+  function closePicker(){ state.picker=null; state.showForm=false; render(); }
   function addCustom(){
     var name = (state.formName||"").trim();
     if (!name) return;
     var base = "c-" + name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
     var id = base + "-" + (state.custom.length+1);
     state.custom.push({ id:id, name:name, domain:state.formDomain });
-    var p = state.picker;
     state.formName = ""; state.showForm = false;
-    if (p) assign(p.day, p.hour, id); else { save(); render(); }
+    if (state.picker) toggleAct(state.picker.day, state.picker.hour, id); else { save(); render(); }
+  }
+  function deleteCustom(id){
+    state.custom = state.custom.filter(function(a){ return a.id !== id; });
+    for (var d in state.schedule){ var day=state.schedule[d];
+      for (var h in day){ var arr=(Array.isArray(day[h])?day[h]:[day[h]]).filter(function(x){ return x!==id; });
+        if (arr.length) day[h]=arr; else delete day[h]; } }
+    save(); render();
   }
   function resetAll(){
     if (!confirm("Reset to your seeded frame? This clears your edits and custom labels.")) return;
     state.schedule = buildDefault(); state.custom = []; state.picker=null; state.showForm=false;
     save(); render();
   }
+  function grabFormName(){ var ci=document.getElementById("customName"); if (ci) state.formName = ci.value; }
 
   /* ---------- icons ---------- */
   var IC = {
@@ -302,7 +323,6 @@
   function dayViewHTML(){
     var now = nowObj();
     var sel = state.selectedDay;
-    var day = state.schedule[sel] || {};
     var h = '<div class="dayPills">'+
       '<button class="arrow" data-action="prevDay">'+IC.left+'</button><div class="pillTrack">';
     for (var i=0;i<7;i++){
@@ -313,14 +333,20 @@
     h += '<div class="dayHeading">'+DAY_NAMES[sel]+'</div>';
     h += '<div class="panel">';
     for (var hr=0; hr<24; hr++){
-      var id = day[hr]; var act = actById(id); var dom = domainOf(id);
+      var ids = cellArr(sel, hr);
       var isNow = (now.day===sel && now.hour===hr);
       h += '<div class="hourRow'+(isNow?" now":"")+'" data-action="openPicker" data-day="'+sel+'" data-hour="'+hr+'">';
       h += '<div class="hourLabel">'+hourLabel(hr)+'</div>';
-      if (act && dom){
-        h += '<div class="block" style="background:'+dom.tint+';border-left-color:'+dom.color+'">'+
-             '<span class="dot" style="background:'+dom.color+'"></span>'+
-             '<span class="blockText">'+esc(act.name)+'</span></div>';
+      if (ids.length){
+        h += '<div class="blocks">';
+        for (var j=0;j<ids.length;j++){
+          var act = actById(ids[j]); var dom = act ? DOMAINS[act.domain] : null;
+          if (!act || !dom) continue;
+          h += '<div class="block" style="background:'+dom.tint+';border-left-color:'+dom.color+'">'+
+               '<span class="dot" style="background:'+dom.color+'"></span>'+
+               '<span class="blockText">'+esc(act.name)+'</span></div>';
+        }
+        h += '</div>';
       } else {
         h += '<div class="empty"><span class="emptyText">+ add</span></div>';
       }
@@ -342,11 +368,13 @@
     for (var hr=0; hr<24; hr++){
       h += '<div class="weekRow"><div class="weekHourText">'+hourLabel(hr).replace(" ","")+'</div>';
       for (var d=0; d<7; d++){
-        var id = (state.schedule[d]||{})[hr]; var act = actById(id); var dom = domainOf(id);
+        var ids = cellArr(d, hr); var first = ids.length ? actById(ids[0]) : null;
+        var dom = first ? DOMAINS[first.domain] : null;
         var bg = dom ? dom.color : "#EFE7D5";
+        var label = first ? esc(first.name) + (ids.length>1 ? " +"+(ids.length-1) : "") : "";
         var isNow = (now.day===d && now.hour===hr);
         h += '<div class="weekCell'+(isNow?" now":"")+'" style="background:'+bg+'" data-action="openPicker" data-day="'+d+'" data-hour="'+hr+'">'+
-             '<span class="weekCellText">'+(act?esc(act.name):"")+'</span></div>';
+             '<span class="weekCellText">'+label+'</span></div>';
       }
       h += '</div>';
     }
@@ -360,12 +388,30 @@
     var inner = "";
     if (state.picker){
       var p = state.picker;
+      var current = cellArr(p.day, p.hour);
       inner += '<div class="sheetHead"><div>'+
         '<div class="sheetKicker">'+DAY_NAMES[p.day].toUpperCase()+'</div>'+
         '<div class="sheetTitle">'+hourLabel(p.hour)+'</div></div>'+
         '<button class="iconBtn" data-action="closePicker">'+IC.x+'</button></div>';
 
-      // grouped chips
+      // what's in this hour right now
+      inner += '<div class="inThis"><div class="inThisLabel">In this hour</div>';
+      if (current.length){
+        inner += '<div class="chipWrap">';
+        for (var c=0;c<current.length;c++){
+          var ca = actById(current[c]); if (!ca) continue; var cd = DOMAINS[ca.domain];
+          inner += '<span class="chip" style="background:'+cd.color+';border-color:'+cd.color+'" data-action="toggleAct" data-id="'+ca.id+'">'+
+                   '<span class="chipText" style="color:#fff">'+esc(ca.name)+'</span>'+
+                   '<span class="chipDel" style="background:rgba(255,255,255,.25);color:#fff">&times;</span></span>';
+        }
+        inner += '</div>';
+      } else {
+        inner += '<div class="inThisEmpty">Empty &mdash; tap an item below to add it.</div>';
+      }
+      inner += '</div>';
+      inner += '<div class="hintLine">Tap to add &middot; tap again (or the &times;) to remove. You can stack several.</div>';
+
+      // catalog grouped by domain
       var acts = allActs();
       for (var k in DOMAINS){
         var items = acts.filter(function(a){ return a.domain===k; });
@@ -373,16 +419,18 @@
         var dom = DOMAINS[k];
         inner += '<div class="groupLabel" style="color:'+dom.color+'">'+dom.label+'</div><div class="chipWrap">';
         for (var i=0;i<items.length;i++){
-          var a = items[i];
-          inner += '<button class="chip" style="background:'+dom.tint+';border-color:'+dom.color+'33" '+
-                   'data-action="assign" data-id="'+a.id+'">'+
-                   '<span class="dot" style="background:'+dom.color+'"></span>'+
-                   '<span class="chipText">'+esc(a.name)+'</span></button>';
+          var a = items[i]; var on = current.indexOf(a.id) !== -1;
+          var bg = on ? dom.color : dom.tint; var bc = on ? dom.color : (dom.color+"33"); var tc = on ? "#fff" : "var(--ink)";
+          inner += '<span class="chip" style="background:'+bg+';border-color:'+bc+'" data-action="toggleAct" data-id="'+a.id+'">'+
+                   (on ? '<span class="check" style="color:#fff">&#10003;</span>' : '<span class="dot" style="background:'+dom.color+'"></span>')+
+                   '<span class="chipText" style="color:'+tc+'">'+esc(a.name)+'</span>'+
+                   (isCustom(a.id) ? '<span class="chipDel" data-action="deleteCustom" data-id="'+a.id+'">&times;</span>' : '')+
+                   '</span>';
         }
         inner += '</div>';
       }
 
-      // custom form
+      // add custom
       if (!state.showForm){
         inner += '<button class="addCustomBtn" data-action="showForm">'+IC.plus+' Add your own label</button>';
       } else {
@@ -390,18 +438,20 @@
           '<input class="input" id="customName" placeholder="Label name (e.g. Adoration)" value="'+esc(state.formName)+'" />'+
           '<div class="formLabel">Color group</div><div class="domainScroll">';
         for (var k2 in DOMAINS){
-          var dm = DOMAINS[k2]; var on = state.formDomain===k2;
+          var dm = DOMAINS[k2]; var sel2 = state.formDomain===k2;
           inner += '<button class="domainPick" data-action="setFormDomain" data-dk="'+k2+'" '+
-                   'style="background:'+(on?dm.color:dm.tint)+';color:'+(on?"#fff":dm.color)+';border-color:'+dm.color+'55">'+dm.label+'</button>';
+                   'style="background:'+(sel2?dm.color:dm.tint)+';color:'+(sel2?"#fff":dm.color)+';border-color:'+dm.color+'55">'+dm.label+'</button>';
         }
         inner += '</div><div class="formBtns">'+
           '<button class="saveBtn" data-action="addCustom">Add &amp; place</button>'+
           '<button class="cancelBtn" data-action="cancelForm">Cancel</button></div></div>';
       }
 
-      inner += '<button class="clearBtn" data-action="clearHour">Clear this hour</button>';
+      inner += '<div class="sheetBtns">'+
+        '<button class="clearBtn" data-action="clearHour">Clear hour</button>'+
+        '<button class="doneBtn" data-action="closePicker">Done</button></div>';
     }
-    return '<div class="overlay'+(open?" open":"")+'" data-action="overlayClose"><div class="sheet" data-stop="1">'+
+    return '<div class="overlay'+(open?" open":"")+'"><div class="sheet">'+
            '<div class="sheetHandle"></div>'+inner+'</div></div>';
   }
 
@@ -417,7 +467,7 @@
         '<button class="toggle'+(state.view==="week"?" active":"")+'" data-action="view" data-view="week">'+IC.cal+' Week</button>'+
       '</div></header>';
     var body = state.view==="day" ? dayViewHTML() : weekViewHTML();
-    var foot = '<div class="footnote">Tap any hour to change it. Everything saves on your phone.</div>';
+    var foot = '<div class="footnote">Tap any hour to add or stack blocks. Everything saves on your phone.</div>';
     app.innerHTML = head + body + foot + pickerHTML();
     lastHour = new Date().getHours();
     var ci = document.getElementById("customName");
@@ -426,11 +476,13 @@
 
   /* ---------- event delegation ---------- */
   document.addEventListener("click", function(ev){
+    // tap on the dark backdrop (but never the sheet itself) closes the picker
+    if (ev.target && ev.target.classList && ev.target.classList.contains("overlay")){ closePicker(); return; }
     var el = ev.target;
-    while (el && el !== document && !el.getAttribute("data-action")) el = el.parentNode;
+    while (el && el !== document && !(el.getAttribute && el.getAttribute("data-action"))) el = el.parentNode;
     if (!el || el === document) return;
     var action = el.getAttribute("data-action");
-    var day = el.getAttribute("data-day"); var hour = el.getAttribute("data-hour");
+    var day = el.getAttribute("data-day"), hour = el.getAttribute("data-hour"), id = el.getAttribute("data-id");
 
     switch(action){
       case "view": state.view = el.getAttribute("data-view"); render(); break;
@@ -438,31 +490,18 @@
       case "prevDay": state.selectedDay = (state.selectedDay+6)%7; render(); break;
       case "nextDay": state.selectedDay = (state.selectedDay+1)%7; render(); break;
       case "jumpDay": state.selectedDay = +day; state.view="day"; render(); break;
-      case "openPicker":
-        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
-        state.picker = { day:+day, hour:+hour }; state.showForm=false; render(); break;
-      case "assign": if (state.picker) assign(state.picker.day, state.picker.hour, el.getAttribute("data-id")); break;
+      case "openPicker": grabFormName(); state.picker = { day:+day, hour:+hour }; state.showForm=false; render(); break;
+      case "toggleAct": if (state.picker) toggleAct(state.picker.day, state.picker.hour, id); break;
       case "clearHour": if (state.picker) clearHour(state.picker.day, state.picker.hour); break;
-      case "closePicker": state.picker=null; state.showForm=false; render(); break;
-      case "overlayClose": state.picker=null; state.showForm=false; render(); break;
-      case "showForm":
-        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
-        state.showForm=true; render(); break;
+      case "deleteCustom": deleteCustom(id); break;
+      case "closePicker": closePicker(); break;
+      case "showForm": grabFormName(); state.showForm=true; render(); break;
       case "cancelForm": state.showForm=false; render(); break;
-      case "setFormDomain":
-        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
-        state.formDomain = el.getAttribute("data-dk"); render(); break;
-      case "addCustom":
-        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
-        addCustom(); break;
+      case "setFormDomain": grabFormName(); state.formDomain = el.getAttribute("data-dk"); render(); break;
+      case "addCustom": grabFormName(); addCustom(); break;
       case "reset": resetAll(); break;
     }
   });
-  // don't let clicks inside the sheet bubble to the overlay-close
-  document.addEventListener("click", function(ev){
-    var el = ev.target;
-    while (el && el !== document){ if (el.getAttribute && el.getAttribute("data-stop")){ ev.stopPropagation(); return; } el = el.parentNode; }
-  }, true);
 
   // keep "now" fresh without disrupting edits
   setInterval(function(){
