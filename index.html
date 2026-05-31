@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Horarium</title>
+<meta name="description" content="A personal rule of the hours." />
+<!-- Add-to-Home-Screen niceties -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Horarium" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#F1E9D8" />
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#2A2620; --parchment:#F1E9D8; --panel:#FBF6EA; --rule:#D9CDB4; --gilt:#9C7A24;
+    --display:'Cormorant Garamond', Georgia, serif;
+    --body:'EB Garamond', Georgia, serif;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:var(--body); color:var(--ink);
+    background:linear-gradient(160deg,#F7F0E0 0%, var(--parchment) 45%, #EAE0CB 100%);
+    background-attachment:fixed; min-height:100vh;
+  }
+  .wrap{ max-width:680px; margin:0 auto; padding:0 14px env(safe-area-inset-bottom) 14px;
+         padding-top:calc(14px + env(safe-area-inset-top)); }
+
+  /* Header */
+  header{ text-align:center; padding:18px 0 8px; }
+  .kicker{ font-family:var(--body); font-weight:500; font-size:11px; letter-spacing:4px; color:var(--gilt); text-transform:uppercase; }
+  h1{ font-family:var(--display); font-weight:700; font-size:46px; margin:2px 0 0; letter-spacing:.5px; }
+  .flourish{ color:var(--gilt); font-size:15px; letter-spacing:6px; margin-top:-2px; }
+  .toggleRow{ display:flex; justify-content:center; gap:8px; margin-top:14px; }
+  .toggle{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--rule); background:var(--panel);
+           border-radius:999px; padding:8px 16px; font-family:var(--body); font-weight:500; font-size:15px; color:#7A7058; cursor:pointer; }
+  .toggle.active{ background:var(--ink); border-color:var(--ink); color:#F3ECDB; }
+  .toggle svg{ width:14px; height:14px; }
+
+  /* Day pills */
+  .dayPills{ display:flex; align-items:center; gap:6px; margin:14px 0 2px; }
+  .arrow{ border:1px solid var(--rule); background:var(--panel); border-radius:10px; width:34px; height:34px;
+          display:flex; align-items:center; justify-content:center; cursor:pointer; color:#8A7E64; flex:0 0 auto; }
+  .pillTrack{ display:flex; flex:1; gap:4px; }
+  .pill{ flex:1; padding:8px 0; border-radius:9px; text-align:center; border:1px solid transparent; cursor:pointer;
+         font-family:var(--body); font-weight:600; font-size:13px; color:#8A7E64; letter-spacing:.5px; }
+  .pill.active{ background:var(--ink); color:#F3ECDB; }
+  .pill.today{ border-color:var(--gilt); }
+
+  .dayHeading{ font-family:var(--display); font-weight:600; font-size:27px; text-align:center; margin:10px 0 12px; }
+
+  /* Day panel */
+  .panel{ background:var(--panel); border:1px solid var(--rule); border-radius:16px; overflow:hidden;
+          box-shadow:0 10px 26px rgba(60,45,20,.10); }
+  .hourRow{ display:flex; align-items:center; padding:6px 12px; min-height:46px; border-top:1px solid #EFE6D2; cursor:pointer; }
+  .hourRow:first-child{ border-top:none; }
+  .hourRow.now{ background:#FFFDF6; }
+  .hourLabel{ width:56px; flex:0 0 auto; font-family:var(--body); font-weight:600; font-size:13px; letter-spacing:.3px; color:#9A8F77; }
+  .hourRow.now .hourLabel{ color:var(--gilt); }
+  .block{ flex:1; display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:10px; border-left:3px solid; }
+  .blockText{ font-family:var(--body); font-weight:500; font-size:16px; color:var(--ink); }
+  .dot{ width:9px; height:9px; border-radius:99px; flex:0 0 auto; }
+  .empty{ flex:1; padding:9px 12px; border-radius:10px; }
+  .emptyText{ font-family:var(--body); font-style:italic; font-size:14px; color:#B6A98C; }
+  .nowTag{ font-family:var(--body); font-weight:600; font-size:10px; letter-spacing:1px; text-transform:uppercase;
+           color:var(--gilt); margin-left:8px; flex:0 0 auto; }
+
+  /* Week grid */
+  .weekPanel{ background:var(--panel); border:1px solid var(--rule); border-radius:16px; padding:8px 8px 12px;
+              box-shadow:0 10px 26px rgba(60,45,20,.10); }
+  .weekHead{ display:flex; margin-bottom:3px; }
+  .weekHourCol{ width:30px; flex:0 0 auto; }
+  .weekHeadCell{ flex:1; text-align:center; font-family:var(--body); font-weight:600; font-size:12px; color:#6E6552;
+                 padding:4px 0; cursor:pointer; letter-spacing:.3px; }
+  .weekHeadCell.today{ color:var(--gilt); }
+  .weekRow{ display:flex; margin-bottom:2px; align-items:stretch; }
+  .weekHourText{ width:30px; flex:0 0 auto; text-align:right; padding-right:4px; font-family:var(--body); font-weight:600;
+                 font-size:9px; color:#A99C82; display:flex; align-items:center; justify-content:flex-end; }
+  .weekCell{ flex:1; height:22px; margin:0 1px; border-radius:3px; display:flex; align-items:center; justify-content:center;
+             cursor:pointer; overflow:hidden; }
+  .weekCellText{ font-family:var(--body); font-weight:600; font-size:8.5px; color:rgba(255,255,255,.92);
+                 white-space:nowrap; padding:0 2px; }
+  .weekCell.now{ outline:1.5px solid var(--gilt); outline-offset:-1px; }
+  .weekHint{ font-family:var(--body); font-style:italic; font-size:13px; color:#9A8E74; text-align:center; margin:12px 6px 0; }
+
+  /* Legend + reset */
+  .legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px 14px; margin:18px 8px 6px; }
+  .legendItem{ display:flex; align-items:center; gap:6px; }
+  .legendText{ font-family:var(--body); font-size:12.5px; color:#766B53; }
+  .resetRow{ text-align:center; padding:14px 0 4px; }
+  .resetBtn{ display:inline-flex; align-items:center; gap:6px; background:none; border:none; cursor:pointer;
+             font-family:var(--body); font-size:12.5px; color:#9A8E74; }
+
+  /* Picker sheet */
+  .overlay{ position:fixed; inset:0; background:rgba(40,32,20,.45); display:flex; align-items:flex-end; z-index:40;
+            opacity:0; pointer-events:none; transition:opacity .18s ease; }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+  .sheet{ width:100%; max-width:680px; margin:0 auto; background:#FBF7EC; border-radius:22px 22px 0 0;
+          padding:10px 16px calc(20px + env(safe-area-inset-bottom)); max-height:82vh; overflow-y:auto;
+          transform:translateY(16px); transition:transform .18s ease; box-shadow:0 -8px 30px rgba(40,32,20,.25); }
+  .overlay.open .sheet{ transform:translateY(0); }
+  .sheetHandle{ width:44px; height:4px; border-radius:99px; background:#D8CBA9; margin:4px auto 12px; }
+  .sheetHead{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .sheetKicker{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:2px; color:var(--gilt); text-transform:uppercase; }
+  .sheetTitle{ font-family:var(--display); font-weight:600; font-size:26px; }
+  .iconBtn{ background:#EFE6D2; border:none; border-radius:99px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#7A6F57; }
+  .groupLabel{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin:14px 0 7px; }
+  .chipWrap{ display:flex; flex-wrap:wrap; gap:7px; }
+  .chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 13px; border-radius:99px; border:1px solid; cursor:pointer; }
+  .chipText{ font-family:var(--body); font-weight:500; font-size:14.5px; color:var(--ink); }
+  .addCustomBtn{ display:inline-flex; align-items:center; gap:7px; align-self:flex-start; background:none; border:none;
+                 cursor:pointer; margin-top:18px; font-family:var(--body); font-weight:500; font-size:14.5px; color:var(--gilt); }
+  .formBox{ background:#F3EAD6; border:1px solid var(--rule); border-radius:10px; padding:14px; margin-top:16px; }
+  .input{ width:100%; background:#FFFDF7; border:1px solid var(--rule); border-radius:9px; padding:11px 12px;
+          font-family:var(--body); font-size:16px; color:var(--ink); }
+  .formLabel{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#8A7E64; margin:14px 0 7px; }
+  .domainScroll{ display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; }
+  .domainPick{ flex:0 0 auto; padding:8px 13px; border-radius:8px; border:1px solid var(--rule); cursor:pointer;
+               font-family:var(--body); font-weight:500; font-size:13px; }
+  .formBtns{ display:flex; gap:8px; margin-top:16px; }
+  .saveBtn{ flex:1; background:var(--ink); color:#F3ECDB; border:none; border-radius:8px; padding:12px;
+            font-family:var(--body); font-weight:500; font-size:15px; cursor:pointer; }
+  .cancelBtn{ background:none; border:1px solid var(--rule); border-radius:8px; padding:12px 18px;
+              font-family:var(--body); font-size:15px; color:#7A6F57; cursor:pointer; }
+  .clearBtn{ width:100%; margin-top:14px; background:none; border:1px solid #E4D8BF; border-radius:10px; padding:12px;
+             font-family:var(--body); font-size:14.5px; color:#9A6A6A; cursor:pointer; }
+
+  .footnote{ text-align:center; font-family:var(--body); font-style:italic; font-size:12px; color:#A99C82; padding:18px 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- palette / data ---------- */
+  var GILT = "#9C7A24";
+  var DOMAINS = {
+    prayer:  { label:"Prayer",        color:"#9C7A24", tint:"#EEE2C0" },
+    sacred:  { label:"Sacraments",    color:"#8C2F39", tint:"#EBD3D5" },
+    work:    { label:"Work",          color:"#46566B", tint:"#DCE1E8" },
+    transit: { label:"Transit",       color:"#857865", tint:"#E6DFD2" },
+    body:    { label:"Body",          color:"#4E7A47", tint:"#DCE8D6" },
+    renewal: { label:"Renewal",       color:"#37767E", tint:"#D5E6E6" },
+    meals:   { label:"Meals",         color:"#BB6F28", tint:"#F1DEC2" },
+    family:  { label:"Family",        color:"#A9536A", tint:"#EDD6DC" },
+    focus:   { label:"Focus & Read",  color:"#574D9C", tint:"#DCD8EE" },
+    home:    { label:"Home",          color:"#8E6630", tint:"#E9DCC3" },
+    rest:    { label:"Rest",          color:"#39415F", tint:"#D5D8E1" },
+    flex:    { label:"Open",          color:"#827A68", tint:"#E5DFD2" }
+  };
+  var ACTIVITIES = [
+    { id:"office",      name:"Morning Office", domain:"prayer" },
+    { id:"compline",    name:"Night Prayer",   domain:"prayer" },
+    { id:"rosary-wife", name:"Rosary w/ wife", domain:"prayer" },
+    { id:"rosary",      name:"Rosary",         domain:"prayer" },
+    { id:"examen",      name:"Examen",         domain:"prayer" },
+    { id:"lectio",      name:"Lectio",         domain:"prayer" },
+    { id:"prayer",      name:"Prayer",         domain:"prayer" },
+    { id:"mass",        name:"Mass",           domain:"sacred" },
+    { id:"confession",  name:"Confession",     domain:"sacred" },
+    { id:"work",        name:"Work",           domain:"work" },
+    { id:"commute",     name:"Commute",        domain:"transit" },
+    { id:"exercise",    name:"Exercise",       domain:"body" },
+    { id:"sauna",       name:"Sauna",          domain:"renewal" },
+    { id:"coldshower",  name:"Cold shower",    domain:"renewal" },
+    { id:"hygiene",     name:"Wash / Groom",   domain:"renewal" },
+    { id:"breakfast",   name:"Breakfast",      domain:"meals" },
+    { id:"lunch",       name:"Lunch",          domain:"meals" },
+    { id:"dinner",      name:"Dinner",         domain:"meals" },
+    { id:"family",      name:"Family time",    domain:"family" },
+    { id:"wife",        name:"Time w/ wife",   domain:"family" },
+    { id:"kids",        name:"Time w/ kids",   domain:"family" },
+    { id:"claude",      name:"Claude time",    domain:"focus" },
+    { id:"reading",     name:"Reading",        domain:"focus" },
+    { id:"chores",      name:"Chores",         domain:"home" },
+    { id:"sleep",       name:"Sleep",          domain:"rest" },
+    { id:"flex",        name:"Open / Flex",    domain:"flex" }
+  ];
+  var DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var DAY_ABBR  = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  /* ---------- seeded frame (Kyle's, v2) ---------- */
+  var WEEKDAY = {
+    0:"sleep",1:"sleep",2:"sleep",3:"sleep",4:"sleep",
+    5:"exercise", 6:"commute",
+    7:"work",8:"work",9:"work",10:"work",11:"work",
+    12:"lunch",
+    13:"work",14:"work",15:"work",
+    16:"commute",17:"kids",18:"dinner",19:"claude",
+    20:"rosary-wife",21:"compline",22:"sleep",23:"sleep"
+  };
+  var SATURDAY = {
+    0:"sleep",1:"sleep",2:"sleep",3:"sleep",4:"sleep",5:"sleep",
+    6:"office",7:"exercise",8:"mass",9:"confession",10:"breakfast",11:"chores",
+    12:"lunch",13:"family",14:"family",15:"claude",16:"family",17:"family",
+    18:"dinner",19:"family",20:"sauna",21:"reading",22:"rosary-wife",23:"compline"
+  };
+  var SUNDAY = {
+    0:"sleep",1:"sleep",2:"sleep",3:"sleep",4:"sleep",5:"sleep",
+    6:"office",7:"breakfast",8:"mass",9:"family",10:"family",11:"family",
+    12:"lunch",13:"family",14:"family",15:"lectio",16:"family",17:"family",
+    18:"dinner",19:"family",20:"rosary-wife",21:"compline",22:"sleep",23:"sleep"
+  };
+  function buildDefault(){
+    var s = { 0:clone(SUNDAY), 6:clone(SATURDAY) };
+    for (var d=1; d<=5; d++) s[d] = clone(WEEKDAY);
+    return s;
+  }
+  function clone(o){ var r={}; for (var k in o) r[k]=o[k]; return r; }
+
+  var STORAGE_KEY = "horarium-v1";
+
+  /* ---------- state + persistence ---------- */
+  var state = {
+    view:"day",
+    selectedDay: new Date().getDay(),
+    schedule: buildDefault(),
+    custom: [],
+    picker: null,        // { day, hour }
+    showForm: false,
+    formName: "",
+    formDomain: "flex"
+  };
+  var loadOk = false;
+  (function load(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw){ var p = JSON.parse(raw); if (p.schedule) state.schedule = p.schedule; if (p.custom) state.custom = p.custom; }
+      loadOk = true;
+    } catch(e){ loadOk = false; }
+  })();
+  function save(){
+    if (!loadOk) return;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ schedule:state.schedule, custom:state.custom })); }
+    catch(e){ /* storage full / private mode — ignore */ }
+  }
+
+  /* ---------- helpers ---------- */
+  function allActs(){ return ACTIVITIES.concat(state.custom); }
+  function actById(id){ var a=allActs(); for (var i=0;i<a.length;i++) if (a[i].id===id) return a[i]; return null; }
+  function domainOf(id){ var a=actById(id); return a ? DOMAINS[a.domain] : null; }
+  function hourLabel(h){ var ap = h<12?"AM":"PM"; var hr = h%12; if (hr===0) hr=12; return hr+" "+ap; }
+  function nowObj(){ var d=new Date(); return { day:d.getDay(), hour:d.getHours() }; }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]; }); }
+
+  /* ---------- mutations ---------- */
+  function assign(day, hour, id){
+    if (!state.schedule[day]) state.schedule[day] = {};
+    state.schedule[day][hour] = id;
+    state.picker = null; state.showForm = false; save(); render();
+  }
+  function clearHour(day, hour){
+    if (state.schedule[day]) delete state.schedule[day][hour];
+    state.picker = null; save(); render();
+  }
+  function addCustom(){
+    var name = (state.formName||"").trim();
+    if (!name) return;
+    var base = "c-" + name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+    var id = base + "-" + (state.custom.length+1);
+    state.custom.push({ id:id, name:name, domain:state.formDomain });
+    var p = state.picker;
+    state.formName = ""; state.showForm = false;
+    if (p) assign(p.day, p.hour, id); else { save(); render(); }
+  }
+  function resetAll(){
+    if (!confirm("Reset to your seeded frame? This clears your edits and custom labels.")) return;
+    state.schedule = buildDefault(); state.custom = []; state.picker=null; state.showForm=false;
+    save(); render();
+  }
+
+  /* ---------- icons ---------- */
+  var IC = {
+    clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+    left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+    x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    reset:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>'
+  };
+
+  /* ---------- render pieces ---------- */
+  function legendHTML(){
+    var h = '<div class="legend">';
+    for (var k in DOMAINS){
+      h += '<span class="legendItem"><span class="dot" style="background:'+DOMAINS[k].color+'"></span>'+
+           '<span class="legendText">'+DOMAINS[k].label+'</span></span>';
+    }
+    return h + '</div><div class="resetRow"><button class="resetBtn" data-action="reset">'+IC.reset+
+           '&nbsp; Reset to seeded frame</button></div>';
+  }
+
+  function dayViewHTML(){
+    var now = nowObj();
+    var sel = state.selectedDay;
+    var day = state.schedule[sel] || {};
+    var h = '<div class="dayPills">'+
+      '<button class="arrow" data-action="prevDay">'+IC.left+'</button><div class="pillTrack">';
+    for (var i=0;i<7;i++){
+      var cls = "pill" + (i===sel?" active":"") + (i===now.day && i!==sel?" today":"");
+      h += '<div class="'+cls+'" data-action="selectDay" data-day="'+i+'">'+DAY_ABBR[i]+'</div>';
+    }
+    h += '</div><button class="arrow" data-action="nextDay">'+IC.right+'</button></div>';
+    h += '<div class="dayHeading">'+DAY_NAMES[sel]+'</div>';
+    h += '<div class="panel">';
+    for (var hr=0; hr<24; hr++){
+      var id = day[hr]; var act = actById(id); var dom = domainOf(id);
+      var isNow = (now.day===sel && now.hour===hr);
+      h += '<div class="hourRow'+(isNow?" now":"")+'" data-action="openPicker" data-day="'+sel+'" data-hour="'+hr+'">';
+      h += '<div class="hourLabel">'+hourLabel(hr)+'</div>';
+      if (act && dom){
+        h += '<div class="block" style="background:'+dom.tint+';border-left-color:'+dom.color+'">'+
+             '<span class="dot" style="background:'+dom.color+'"></span>'+
+             '<span class="blockText">'+esc(act.name)+'</span></div>';
+      } else {
+        h += '<div class="empty"><span class="emptyText">+ add</span></div>';
+      }
+      if (isNow) h += '<span class="nowTag">now</span>';
+      h += '</div>';
+    }
+    h += '</div>';
+    h += legendHTML();
+    return h;
+  }
+
+  function weekViewHTML(){
+    var now = nowObj();
+    var h = '<div class="weekPanel"><div class="weekHead"><div class="weekHourCol"></div>';
+    for (var i=0;i<7;i++){
+      h += '<div class="weekHeadCell'+(i===now.day?" today":"")+'" data-action="jumpDay" data-day="'+i+'">'+DAY_ABBR[i]+'</div>';
+    }
+    h += '</div>';
+    for (var hr=0; hr<24; hr++){
+      h += '<div class="weekRow"><div class="weekHourText">'+hourLabel(hr).replace(" ","")+'</div>';
+      for (var d=0; d<7; d++){
+        var id = (state.schedule[d]||{})[hr]; var act = actById(id); var dom = domainOf(id);
+        var bg = dom ? dom.color : "#EFE7D5";
+        var isNow = (now.day===d && now.hour===hr);
+        h += '<div class="weekCell'+(isNow?" now":"")+'" style="background:'+bg+'" data-action="openPicker" data-day="'+d+'" data-hour="'+hr+'">'+
+             '<span class="weekCellText">'+(act?esc(act.name):"")+'</span></div>';
+      }
+      h += '</div>';
+    }
+    h += '</div><div class="weekHint">Tap a day name to open it &middot; tap any cell to edit</div>';
+    h += legendHTML();
+    return h;
+  }
+
+  function pickerHTML(){
+    var open = !!state.picker;
+    var inner = "";
+    if (state.picker){
+      var p = state.picker;
+      inner += '<div class="sheetHead"><div>'+
+        '<div class="sheetKicker">'+DAY_NAMES[p.day].toUpperCase()+'</div>'+
+        '<div class="sheetTitle">'+hourLabel(p.hour)+'</div></div>'+
+        '<button class="iconBtn" data-action="closePicker">'+IC.x+'</button></div>';
+
+      // grouped chips
+      var acts = allActs();
+      for (var k in DOMAINS){
+        var items = acts.filter(function(a){ return a.domain===k; });
+        if (!items.length) continue;
+        var dom = DOMAINS[k];
+        inner += '<div class="groupLabel" style="color:'+dom.color+'">'+dom.label+'</div><div class="chipWrap">';
+        for (var i=0;i<items.length;i++){
+          var a = items[i];
+          inner += '<button class="chip" style="background:'+dom.tint+';border-color:'+dom.color+'33" '+
+                   'data-action="assign" data-id="'+a.id+'">'+
+                   '<span class="dot" style="background:'+dom.color+'"></span>'+
+                   '<span class="chipText">'+esc(a.name)+'</span></button>';
+        }
+        inner += '</div>';
+      }
+
+      // custom form
+      if (!state.showForm){
+        inner += '<button class="addCustomBtn" data-action="showForm">'+IC.plus+' Add your own label</button>';
+      } else {
+        inner += '<div class="formBox">'+
+          '<input class="input" id="customName" placeholder="Label name (e.g. Adoration)" value="'+esc(state.formName)+'" />'+
+          '<div class="formLabel">Color group</div><div class="domainScroll">';
+        for (var k2 in DOMAINS){
+          var dm = DOMAINS[k2]; var on = state.formDomain===k2;
+          inner += '<button class="domainPick" data-action="setFormDomain" data-dk="'+k2+'" '+
+                   'style="background:'+(on?dm.color:dm.tint)+';color:'+(on?"#fff":dm.color)+';border-color:'+dm.color+'55">'+dm.label+'</button>';
+        }
+        inner += '</div><div class="formBtns">'+
+          '<button class="saveBtn" data-action="addCustom">Add &amp; place</button>'+
+          '<button class="cancelBtn" data-action="cancelForm">Cancel</button></div></div>';
+      }
+
+      inner += '<button class="clearBtn" data-action="clearHour">Clear this hour</button>';
+    }
+    return '<div class="overlay'+(open?" open":"")+'" data-action="overlayClose"><div class="sheet" data-stop="1">'+
+           '<div class="sheetHandle"></div>'+inner+'</div></div>';
+  }
+
+  /* ---------- top-level render ---------- */
+  var lastHour = -1;
+  function render(){
+    var app = document.getElementById("app");
+    var head =
+      '<header><div class="kicker">A Rule of the Hours</div>'+
+      '<h1>Horarium</h1><div class="flourish">&#10022;</div>'+
+      '<div class="toggleRow">'+
+        '<button class="toggle'+(state.view==="day"?" active":"")+'" data-action="view" data-view="day">'+IC.clock+' Day</button>'+
+        '<button class="toggle'+(state.view==="week"?" active":"")+'" data-action="view" data-view="week">'+IC.cal+' Week</button>'+
+      '</div></header>';
+    var body = state.view==="day" ? dayViewHTML() : weekViewHTML();
+    var foot = '<div class="footnote">Tap any hour to change it. Everything saves on your phone.</div>';
+    app.innerHTML = head + body + foot + pickerHTML();
+    lastHour = new Date().getHours();
+    var ci = document.getElementById("customName");
+    if (ci){ ci.addEventListener("input", function(){ state.formName = ci.value; }); }
+  }
+
+  /* ---------- event delegation ---------- */
+  document.addEventListener("click", function(ev){
+    var el = ev.target;
+    while (el && el !== document && !el.getAttribute("data-action")) el = el.parentNode;
+    if (!el || el === document) return;
+    var action = el.getAttribute("data-action");
+    var day = el.getAttribute("data-day"); var hour = el.getAttribute("data-hour");
+
+    switch(action){
+      case "view": state.view = el.getAttribute("data-view"); render(); break;
+      case "selectDay": state.selectedDay = +day; render(); break;
+      case "prevDay": state.selectedDay = (state.selectedDay+6)%7; render(); break;
+      case "nextDay": state.selectedDay = (state.selectedDay+1)%7; render(); break;
+      case "jumpDay": state.selectedDay = +day; state.view="day"; render(); break;
+      case "openPicker":
+        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
+        state.picker = { day:+day, hour:+hour }; state.showForm=false; render(); break;
+      case "assign": if (state.picker) assign(state.picker.day, state.picker.hour, el.getAttribute("data-id")); break;
+      case "clearHour": if (state.picker) clearHour(state.picker.day, state.picker.hour); break;
+      case "closePicker": state.picker=null; state.showForm=false; render(); break;
+      case "overlayClose": state.picker=null; state.showForm=false; render(); break;
+      case "showForm":
+        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
+        state.showForm=true; render(); break;
+      case "cancelForm": state.showForm=false; render(); break;
+      case "setFormDomain":
+        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
+        state.formDomain = el.getAttribute("data-dk"); render(); break;
+      case "addCustom":
+        if (document.getElementById("customName")) state.formName = document.getElementById("customName").value;
+        addCustom(); break;
+      case "reset": resetAll(); break;
+    }
+  });
+  // don't let clicks inside the sheet bubble to the overlay-close
+  document.addEventListener("click", function(ev){
+    var el = ev.target;
+    while (el && el !== document){ if (el.getAttribute && el.getAttribute("data-stop")){ ev.stopPropagation(); return; } el = el.parentNode; }
+  }, true);
+
+  // keep "now" fresh without disrupting edits
+  setInterval(function(){
+    if (state.picker || state.showForm) return;
+    if (new Date().getHours() !== lastHour) render();
+  }, 30000);
+
+  render();
+})();
+</script>
+</body>
+</html>
