@@ -11,6 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#F1E9D8" />
 <link rel="apple-touch-icon" href="icon.png" />
+<link rel="manifest" href="manifest.json" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
@@ -141,6 +142,39 @@
             font-family:var(--body); font-weight:600; font-size:15px; cursor:pointer; }
 
   .footnote{ text-align:center; font-family:var(--body); font-style:italic; font-size:12px; color:#A99C82; padding:18px 0 6px; }
+
+  /* Now / Next hero */
+  .hero{ background:var(--panel); border:1px solid var(--rule); border-radius:16px; padding:14px 16px 13px; margin:14px 0 2px;
+         box-shadow:0 10px 26px rgba(60,45,20,.10); cursor:pointer; }
+  .heroTop{ display:flex; align-items:center; justify-content:space-between; }
+  .heroKicker{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:3px; color:var(--gilt); text-transform:uppercase; }
+  .heroDate{ font-family:var(--body); font-weight:500; font-size:12.5px; color:#9A8F77; }
+  .heroNowWrap{ display:flex; flex-direction:column; gap:6px; margin-top:9px; }
+  .heroBlock{ display:flex; align-items:center; gap:10px; }
+  .heroDot{ width:11px; height:11px; border-radius:99px; flex:0 0 auto; }
+  .heroName{ font-family:var(--display); font-weight:600; font-size:25px; color:var(--ink); line-height:1.08; }
+  .heroEmpty{ font-family:var(--display); font-weight:600; font-size:22px; font-style:italic; color:#A99C82; margin-top:7px; }
+  .heroBar{ height:4px; border-radius:99px; background:#EAE0CB; margin:13px 0 0; overflow:hidden; }
+  .heroBarFill{ height:100%; background:var(--gilt); border-radius:99px; transition:width .3s ease; }
+  .heroNext{ font-family:var(--body); font-size:13.5px; color:#7A6F57; margin-top:10px; }
+  .heroNext b{ font-weight:600; color:var(--ink); }
+  .heroKept{ display:flex; align-items:center; margin-top:8px; }
+  .heroKept b{ font-weight:600; color:var(--gilt); }
+  .pips{ display:inline-flex; gap:4px; margin-right:9px; }
+  .pip{ width:8px; height:8px; border-radius:99px; border:1.5px solid #C9BC9E; box-sizing:border-box; }
+  .pip.on{ background:var(--gilt); border-color:var(--gilt); }
+  .keptTxt{ font-family:var(--body); font-size:13px; color:#7A6F57; }
+  .liturgy{ font-family:var(--body); font-size:12.5px; color:#8A7E64; margin-top:9px;
+            display:flex; align-items:center; justify-content:center; gap:7px; }
+  .litDot{ width:8px; height:8px; border-radius:99px; flex:0 0 auto; }
+
+  /* Completion check-off (today only) */
+  .blockCheck{ margin-left:auto; width:22px; height:22px; border-radius:99px; border:1.5px solid rgba(0,0,0,.16);
+               display:flex; align-items:center; justify-content:center; color:#fff; flex:0 0 auto; cursor:pointer; }
+  .blockCheck svg{ width:13px; height:13px; }
+  .blockCheck.on{ background:var(--gilt); border-color:var(--gilt); }
+  .block.kept{ opacity:.74; }
+  .block.kept .blockText{ color:#8A7E64; }
 </style>
 </head>
 <body>
@@ -234,6 +268,7 @@
     selectedDay: new Date().getDay(),
     schedule: buildDefault(),
     custom: [],
+    done: {},            // { "YYYY-MM-DD": { hour: [activityId, ...] } }
     picker: null,        // { day, hour }
     showForm: false,
     formName: "",
@@ -243,13 +278,13 @@
   (function load(){
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw){ var p = JSON.parse(raw); if (p.schedule) state.schedule = p.schedule; if (p.custom) state.custom = p.custom; }
+      if (raw){ var p = JSON.parse(raw); if (p.schedule) state.schedule = p.schedule; if (p.custom) state.custom = p.custom; if (p.done) state.done = p.done; }
       loadOk = true;
     } catch(e){ loadOk = false; }
   })();
   function save(){
     if (!loadOk) return;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ schedule:state.schedule, custom:state.custom })); }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ schedule:state.schedule, custom:state.custom, done:state.done })); }
     catch(e){ /* storage full / private mode — ignore */ }
   }
 
@@ -265,6 +300,67 @@
   function setCell(day, hour, arr){
     if (!state.schedule[day]) state.schedule[day] = {};
     if (arr && arr.length) state.schedule[day][hour] = arr; else delete state.schedule[day][hour];
+  }
+
+  /* ---------- completion log (kept by calendar date) ---------- */
+  function pad2(n){ return n<10 ? "0"+n : ""+n; }
+  function dateKey(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function todayKey(){ return dateKey(new Date()); }
+  function isAnchorId(id){ var a=actById(id); return !!(a && (a.domain==="prayer" || a.domain==="sacred")); }
+  function isDone(key, hour, id){ var hd=state.done[key]; return !!(hd && hd[hour] && hd[hour].indexOf(id)!==-1); }
+  function toggleDone(hour, id){
+    var key=todayKey(); var hd=state.done[key]||(state.done[key]={}); var arr=hd[hour]||(hd[hour]=[]);
+    var i=arr.indexOf(id); if (i===-1) arr.push(id); else arr.splice(i,1);
+    if (!arr.length) delete hd[hour];
+    save(); render();
+  }
+  // today's scheduled prayer/sacrament anchors and how many are kept
+  function anchorStats(){
+    var d=new Date(); var wd=d.getDay(); var key=dateKey(d); var sched=state.schedule[wd]||{};
+    var total=0, kept=0;
+    for (var h in sched){
+      var ids=cellArr(wd, h);
+      for (var i=0;i<ids.length;i++){ if (isAnchorId(ids[i])){ total++; if (isDone(key, h, ids[i])) kept++; } }
+    }
+    return { total:total, kept:kept };
+  }
+
+  /* ---------- liturgical day (offline, computed from Easter) ---------- */
+  function easter(year){
+    var a=year%19, b=Math.floor(year/100), c=year%100, d=Math.floor(b/4), e=b%4,
+        f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30,
+        i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*m+114)/31), da=((h+l-7*m+114)%31)+1;
+    return new Date(year, mo-1, da);
+  }
+  function liturgy(date){
+    var y=date.getFullYear(); var E=easter(y);
+    var ashWed=new Date(E); ashWed.setDate(E.getDate()-46);
+    var pentecost=new Date(E); pentecost.setDate(E.getDate()+49);
+    var holySat=new Date(E); holySat.setDate(E.getDate()-1);
+    var dec24=new Date(y,11,24); var lastSun=new Date(y,11,24); lastSun.setDate(24-dec24.getDay());
+    var advent1=new Date(lastSun); advent1.setDate(lastSun.getDate()-21);
+    var t=date.getTime();
+    function within(a,b){ var aa=new Date(a); aa.setHours(0,0,0,0); var bb=new Date(b); bb.setHours(23,59,59,999); return t>=aa.getTime() && t<=bb.getTime(); }
+    if (within(new Date(y,0,1), new Date(y,0,13))) return { season:"Christmas", color:"#B8902F" };
+    if (within(new Date(y,11,25), new Date(y,11,31))) return { season:"Christmas", color:"#B8902F" };
+    if (within(advent1, dec24)) return { season:"Advent", color:"#6B4E8C" };
+    if (within(ashWed, holySat)) return { season:"Lent", color:"#6B4E8C" };
+    if (within(E, pentecost)) return { season:"Eastertide", color:"#B8902F" };
+    return { season:"Ordinary Time", color:"#4E7A47" };
+  }
+  // faithful days within the current contiguous liturgical season (gentle, accrues — never a broken-streak)
+  function faithfulDaysInSeason(){
+    var today=new Date(); var season=liturgy(today).season; var count=0;
+    for (var i=0;i<160;i++){
+      var dt=new Date(today); dt.setDate(today.getDate()-i);
+      if (liturgy(dt).season!==season) break;
+      var wd=dt.getDay(); var key=dateKey(dt); var sched=state.schedule[wd]||{};
+      var total=0, kept=0;
+      for (var hh in sched){ var ids=cellArr(wd,hh); for (var j=0;j<ids.length;j++){ if (isAnchorId(ids[j])){ total++; if (isDone(key,hh,ids[j])) kept++; } } }
+      if (total>0 && kept===total) count++;
+    }
+    return count;
   }
 
   /* ---------- mutations ---------- */
@@ -306,7 +402,8 @@
     right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
     x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-    reset:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>'
+    reset:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>'
   };
 
   /* ---------- render pieces ---------- */
@@ -323,6 +420,8 @@
   function dayViewHTML(){
     var now = nowObj();
     var sel = state.selectedDay;
+    var isToday = (sel === now.day);
+    var todayK = todayKey();
     var h = '<div class="dayPills">'+
       '<button class="arrow" data-action="prevDay">'+IC.left+'</button><div class="pillTrack">';
     for (var i=0;i<7;i++){
@@ -342,9 +441,12 @@
         for (var j=0;j<ids.length;j++){
           var act = actById(ids[j]); var dom = act ? DOMAINS[act.domain] : null;
           if (!act || !dom) continue;
-          h += '<div class="block" style="background:'+dom.tint+';border-left-color:'+dom.color+'">'+
+          var kept = isToday && isDone(todayK, hr, ids[j]);
+          h += '<div class="block'+(kept?' kept':'')+'" style="background:'+dom.tint+';border-left-color:'+dom.color+'">'+
                '<span class="dot" style="background:'+dom.color+'"></span>'+
-               '<span class="blockText">'+esc(act.name)+'</span></div>';
+               '<span class="blockText">'+esc(act.name)+'</span>'+
+               (isToday ? '<span class="blockCheck'+(kept?' on':'')+'" data-action="toggleDone" data-hour="'+hr+'" data-id="'+ids[j]+'" title="Mark kept">'+(kept?IC.check:'')+'</span>' : '')+
+               '</div>';
         }
         h += '</div>';
       } else {
@@ -455,23 +557,109 @@
            '<div class="sheetHandle"></div>'+inner+'</div></div>';
   }
 
+  /* ---------- now / next ---------- */
+  function nowNextInfo(){
+    var d = new Date(); var day = d.getDay(), hour = d.getHours(), min = d.getMinutes();
+    var nowIds = cellArr(day, hour);
+    var next = null;
+    for (var i=1; i<=24; i++){
+      var h = (hour + i) % 24; var dd = (day + Math.floor((hour + i) / 24)) % 7;
+      var ids = cellArr(dd, h);
+      if (ids.length){ next = { day:dd, hour:h, ids:ids, sameDay:(dd===day) }; break; }
+    }
+    return { day:day, hour:hour, min:min, nowIds:nowIds, next:next };
+  }
+  function heroHTML(){
+    var info = nowNextInfo();
+    var inner = '<div class="heroTop">'+
+      '<span class="heroKicker">Now &middot; '+hourLabel(info.hour)+'</span>'+
+      '<span class="heroDate">'+DAY_NAMES[info.day]+'</span></div>';
+    if (info.nowIds.length){
+      inner += '<div class="heroNowWrap">';
+      for (var i=0;i<info.nowIds.length;i++){
+        var a = actById(info.nowIds[i]); if (!a) continue; var dm = DOMAINS[a.domain]; if (!dm) continue;
+        inner += '<div class="heroBlock"><span class="heroDot" style="background:'+dm.color+'"></span>'+
+                 '<span class="heroName">'+esc(a.name)+'</span></div>';
+      }
+      inner += '</div>';
+    } else {
+      inner += '<div class="heroEmpty">An open hour &mdash; pause, breathe, or flex.</div>';
+    }
+    var pct = Math.max(3, Math.min(100, Math.round(info.min / 60 * 100)));
+    inner += '<div class="heroBar"><div class="heroBarFill" style="width:'+pct+'%"></div></div>';
+    if (info.next){
+      var na = actById(info.next.ids[0]);
+      var when = (info.next.sameDay ? '' : DAY_ABBR[info.next.day]+' ') + hourLabel(info.next.hour);
+      var more = info.next.ids.length>1 ? ' +'+(info.next.ids.length-1) : '';
+      inner += '<div class="heroNext">Next &middot; <b>'+when+'</b> &middot; '+esc(na?na.name:'')+more+'</div>';
+    }
+    var st = anchorStats();
+    if (st.total){
+      var pips='';
+      for (var pi=0; pi<st.total; pi++){ pips += '<span class="pip'+(pi<st.kept?' on':'')+'"></span>'; }
+      var fd = faithfulDaysInSeason();
+      inner += '<div class="heroKept"><span class="pips">'+pips+'</span>'+
+               '<span class="keptTxt"><b>'+st.kept+' of '+st.total+'</b> kept today'+
+               (fd>0 ? ' &middot; '+fd+' faithful '+(fd===1?'day':'days')+' this season' : '')+
+               '</span></div>';
+    }
+    return '<div class="hero" data-action="openPicker" data-day="'+info.day+'" data-hour="'+info.hour+'">'+inner+'</div>';
+  }
+
+  /* ---------- export (schedule.json → Scriptable reminders + widget) ---------- */
+  function exportSchedule(){
+    var domains={};
+    for (var k in DOMAINS){ domains[k]={ label:DOMAINS[k].label, color:DOMAINS[k].color }; }
+    var days={};
+    for (var d=0; d<7; d++){
+      var rows=[];
+      for (var h=0; h<24; h++){
+        var ids=cellArr(d,h); if (!ids.length) continue;
+        var names=[], dom=null;
+        for (var i=0;i<ids.length;i++){ var a=actById(ids[i]); if(a){ names.push(a.name); if(dom===null) dom=a.domain; } }
+        if (names.length) rows.push({ h:h, ids:ids.slice(), names:names, domain:dom });
+      }
+      days[d]=rows;
+    }
+    return { generated:new Date().toISOString(), tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||"America/Los_Angeles"), domains:domains, days:days };
+  }
+  window.horariumExport = exportSchedule;   // exposed for schedule.json regeneration / external tooling
+
   /* ---------- top-level render ---------- */
   var lastHour = -1;
+  var firstPaint = true;
   function render(){
     var app = document.getElementById("app");
+    var L = liturgy(new Date());
+    var litDate = new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" });
     var head =
       '<header><div class="kicker">A Rule of the Hours</div>'+
       '<h1>Horarium</h1><div class="flourish">&#10022;</div>'+
+      '<div class="liturgy"><span class="litDot" style="background:'+L.color+'"></span>'+
+        litDate+' &middot; <span style="color:'+L.color+'">'+L.season+'</span></div>'+
       '<div class="toggleRow">'+
         '<button class="toggle'+(state.view==="day"?" active":"")+'" data-action="view" data-view="day">'+IC.clock+' Day</button>'+
         '<button class="toggle'+(state.view==="week"?" active":"")+'" data-action="view" data-view="week">'+IC.cal+' Week</button>'+
       '</div></header>';
     var body = state.view==="day" ? dayViewHTML() : weekViewHTML();
     var foot = '<div class="footnote">Tap any hour to add or stack blocks. Everything saves on your phone.</div>';
-    app.innerHTML = head + body + foot + pickerHTML();
+    app.innerHTML = head + heroHTML() + body + foot + pickerHTML();
     lastHour = new Date().getHours();
     var ci = document.getElementById("customName");
     if (ci){ ci.addEventListener("input", function(){ state.formName = ci.value; }); }
+    if (firstPaint){
+      firstPaint = false;
+      if (state.view==="day" && state.selectedDay===nowObj().day){
+        var nr = document.querySelector(".hourRow.now");
+        if (nr){ try{ nr.scrollIntoView({block:"center"}); }catch(e){ nr.scrollIntoView(); } }
+      }
+    }
+    try {
+      if (navigator.setAppBadge){
+        var bs = anchorStats(); var rem = Math.max(0, bs.total - bs.kept);
+        if (rem > 0) navigator.setAppBadge(rem); else if (navigator.clearAppBadge) navigator.clearAppBadge();
+      }
+    } catch(e){}
   }
 
   /* ---------- event delegation ---------- */
@@ -492,6 +680,7 @@
       case "jumpDay": state.selectedDay = +day; state.view="day"; render(); break;
       case "openPicker": grabFormName(); state.picker = { day:+day, hour:+hour }; state.showForm=false; render(); break;
       case "toggleAct": if (state.picker) toggleAct(state.picker.day, state.picker.hour, id); break;
+      case "toggleDone": toggleDone(+hour, id); break;
       case "clearHour": if (state.picker) clearHour(state.picker.day, state.picker.hour); break;
       case "deleteCustom": deleteCustom(id); break;
       case "closePicker": closePicker(); break;
@@ -506,11 +695,22 @@
   // keep "now" fresh without disrupting edits
   setInterval(function(){
     if (state.picker || state.showForm) return;
-    if (new Date().getHours() !== lastHour) render();
+    var d = new Date();
+    if (d.getHours() !== lastHour){ render(); return; }   // hour rolled — refresh now/next
+    var fill = document.querySelector(".heroBarFill");      // else just advance the minute hairline, no full re-render
+    if (fill){ fill.style.width = Math.max(3, Math.min(100, Math.round(d.getMinutes()/60*100)))+"%"; }
   }, 30000);
 
   render();
 })();
+</script>
+<script>
+  /* Register the service worker — enables offline use, installability, and (later) push. */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('service-worker.js').catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>

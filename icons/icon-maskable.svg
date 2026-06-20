@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#2A2620"/>
+  <text x="256" y="248" text-anchor="middle" dominant-baseline="middle"
+        font-family="Georgia, 'Times New Roman', 'Cormorant Garamond', serif" font-weight="600"
+        font-size="210" fill="#F1E9D8">H</text>
+  <path d="M256,330 L260.5,345.5 L276,350 L260.5,354.5 L256,370 L251.5,354.5 L236,350 L251.5,345.5 Z" fill="#9C7A24"/>
+</svg>
