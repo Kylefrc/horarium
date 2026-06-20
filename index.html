@@ -175,6 +175,24 @@
   .blockCheck.on{ background:var(--gilt); border-color:var(--gilt); }
   .block.kept{ opacity:.74; }
   .block.kept .blockText{ color:#8A7E64; }
+
+  /* Examen review sheet */
+  .examenCta{ margin-top:13px; align-self:flex-start; background:none; border:none; cursor:pointer; padding:0;
+              font-family:var(--body); font-weight:600; font-size:14.5px; color:var(--gilt); }
+  .examenIntro{ font-family:var(--body); font-style:italic; font-size:15.5px; color:#7A6F57; text-align:center; margin:8px 6px 16px; }
+  .examenLabel{ font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8A7E64; margin:6px 2px 9px; }
+  .examenList{ display:flex; flex-direction:column; gap:8px; }
+  .examenRow{ display:flex; align-items:center; gap:11px; padding:12px 13px; border-radius:12px;
+              background:#F4ECD9; border:1px solid #E6DABF; cursor:pointer; }
+  .examenRow.kept{ background:#EFE7D0; }
+  .examenCheck{ width:24px; height:24px; border-radius:99px; border:1.6px solid #C9BC9E; box-sizing:border-box;
+                display:flex; align-items:center; justify-content:center; color:#fff; flex:0 0 auto; }
+  .examenCheck.on{ background:var(--gilt); border-color:var(--gilt); }
+  .examenCheck svg{ width:14px; height:14px; }
+  .examenName{ font-family:var(--body); font-weight:500; font-size:16px; color:var(--ink); flex:1; }
+  .examenRow.kept .examenName{ color:#8A7E64; }
+  .examenTime{ font-family:var(--body); font-size:12.5px; color:#9A8F77; flex:0 0 auto; }
+  .examenSeal{ font-family:var(--body); font-style:italic; font-size:13px; color:#9A8E74; text-align:center; margin-top:14px; }
 </style>
 </head>
 <body>
@@ -269,6 +287,7 @@
     schedule: buildDefault(),
     custom: [],
     done: {},            // { "YYYY-MM-DD": { hour: [activityId, ...] } }
+    examen: false,       // nightly Examen review sheet open?
     picker: null,        // { day, hour }
     showForm: false,
     formName: "",
@@ -282,6 +301,8 @@
       loadOk = true;
     } catch(e){ loadOk = false; }
   })();
+  // deep-link from the evening Examen notification → open the review sheet
+  try { if (/[?&]examen=1(\b|$|&)/.test(location.search)) state.examen = true; } catch(e){}
   function save(){
     if (!loadOk) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ schedule:state.schedule, custom:state.custom, done:state.done })); }
@@ -371,6 +392,15 @@
   }
   function clearHour(day, hour){ setCell(day, hour, []); save(); render(); }
   function closePicker(){ state.picker=null; state.showForm=false; render(); }
+  function closeExamen(){ state.examen=false; render(); }
+  function sealDay(){
+    var d=new Date(); var wd=d.getDay(); var key=dateKey(d); state.examen=false;
+    // sealing the day marks the Examen kept (if it's on today's rule and not already)
+    for (var h=0; h<24; h++){ var ids=cellArr(wd,h);
+      if (ids.indexOf("examen")!==-1 && !isDone(key,h,"examen")){ toggleDone(h,"examen"); return; }
+    }
+    render();
+  }
   function addCustom(){
     var name = (state.formName||"").trim();
     if (!name) return;
@@ -557,6 +587,39 @@
            '<div class="sheetHandle"></div>'+inner+'</div></div>';
   }
 
+  function examenHTML(){
+    var open = !!state.examen;
+    var inner = "";
+    if (state.examen){
+      var d=new Date(); var wd=d.getDay(); var key=dateKey(d);
+      inner += '<div class="sheetHead"><div>'+
+        '<div class="sheetKicker">Tonight</div>'+
+        '<div class="sheetTitle">Examen</div></div>'+
+        '<button class="iconBtn" data-action="closeExamen">'+IC.x+'</button></div>';
+      inner += '<div class="examenIntro">Give thanks &middot; review the day &middot; rest in Him.</div>';
+      var anchors=[];
+      for (var h=0; h<24; h++){ var ids=cellArr(wd,h); for (var i=0;i<ids.length;i++){ if (isAnchorId(ids[i])) anchors.push({h:h,id:ids[i]}); } }
+      inner += '<div class="examenLabel">What did you keep?</div><div class="examenList">';
+      if (anchors.length){
+        for (var a=0;a<anchors.length;a++){
+          var act=actById(anchors[a].id); if(!act) continue;
+          var kept=isDone(key, anchors[a].h, anchors[a].id);
+          inner += '<div class="examenRow'+(kept?' kept':'')+'" data-action="examenToggle" data-hour="'+anchors[a].h+'" data-id="'+anchors[a].id+'">'+
+            '<span class="examenCheck'+(kept?' on':'')+'">'+(kept?IC.check:'')+'</span>'+
+            '<span class="examenName">'+esc(act.name)+'</span>'+
+            '<span class="examenTime">'+hourLabel(anchors[a].h)+'</span></div>';
+        }
+      } else {
+        inner += '<div class="inThisEmpty">No anchors on today’s rule.</div>';
+      }
+      inner += '</div>';
+      inner += '<button class="doneBtn" data-action="sealDay" style="margin-top:18px;width:100%">Seal the day</button>';
+      inner += '<div class="examenSeal">&#10022; Into your hands, Lord.</div>';
+    }
+    return '<div class="overlay'+(open?" open":"")+'" data-ov="examen"><div class="sheet">'+
+           '<div class="sheetHandle"></div>'+inner+'</div></div>';
+  }
+
   /* ---------- now / next ---------- */
   function nowNextInfo(){
     var d = new Date(); var day = d.getDay(), hour = d.getHours(), min = d.getMinutes();
@@ -603,6 +666,9 @@
                (fd>0 ? ' &middot; '+fd+' faithful '+(fd===1?'day':'days')+' this season' : '')+
                '</span></div>';
     }
+    if (new Date().getHours() >= 19){
+      inner += '<button class="examenCta" data-action="openExamen">Pray the Examen &rarr;</button>';
+    }
     return '<div class="hero" data-action="openPicker" data-day="'+info.day+'" data-hour="'+info.hour+'">'+inner+'</div>';
   }
 
@@ -643,7 +709,7 @@
       '</div></header>';
     var body = state.view==="day" ? dayViewHTML() : weekViewHTML();
     var foot = '<div class="footnote">Tap any hour to add or stack blocks. Everything saves on your phone.</div>';
-    app.innerHTML = head + heroHTML() + body + foot + pickerHTML();
+    app.innerHTML = head + heroHTML() + body + foot + pickerHTML() + examenHTML();
     lastHour = new Date().getHours();
     var ci = document.getElementById("customName");
     if (ci){ ci.addEventListener("input", function(){ state.formName = ci.value; }); }
@@ -665,7 +731,10 @@
   /* ---------- event delegation ---------- */
   document.addEventListener("click", function(ev){
     // tap on the dark backdrop (but never the sheet itself) closes the picker
-    if (ev.target && ev.target.classList && ev.target.classList.contains("overlay")){ closePicker(); return; }
+    if (ev.target && ev.target.classList && ev.target.classList.contains("overlay")){
+      if (ev.target.getAttribute("data-ov")==="examen") closeExamen(); else closePicker();
+      return;
+    }
     var el = ev.target;
     while (el && el !== document && !(el.getAttribute && el.getAttribute("data-action"))) el = el.parentNode;
     if (!el || el === document) return;
@@ -684,6 +753,10 @@
       case "clearHour": if (state.picker) clearHour(state.picker.day, state.picker.hour); break;
       case "deleteCustom": deleteCustom(id); break;
       case "closePicker": closePicker(); break;
+      case "openExamen": state.examen=true; state.picker=null; state.showForm=false; render(); break;
+      case "closeExamen": closeExamen(); break;
+      case "examenToggle": toggleDone(+hour, id); break;
+      case "sealDay": sealDay(); break;
       case "showForm": grabFormName(); state.showForm=true; render(); break;
       case "cancelForm": state.showForm=false; render(); break;
       case "setFormDomain": grabFormName(); state.formDomain = el.getAttribute("data-dk"); render(); break;
@@ -694,7 +767,7 @@
 
   // keep "now" fresh without disrupting edits
   setInterval(function(){
-    if (state.picker || state.showForm) return;
+    if (state.picker || state.showForm || state.examen) return;
     var d = new Date();
     if (d.getHours() !== lastHour){ render(); return; }   // hour rolled — refresh now/next
     var fill = document.querySelector(".heroBarFill");      // else just advance the minute hairline, no full re-render

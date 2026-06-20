@@ -1,6 +1,6 @@
 /* Horarium service worker — offline + installable + push-ready.
    Bump VERSION whenever core assets change so clients pick up the update. */
-const VERSION = 'horarium-v1';
+const VERSION = 'horarium-v2';
 const CORE = [
   './',
   './index.html',
